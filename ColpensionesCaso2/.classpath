@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="lib/bcprov-jdk15on-156.jar"/>
 	<classpathentry kind="lib" path="lib/bctest-jdk15on-156.jar"/>
 	<classpathentry kind="lib" path="lib/bctls-jdk15on-156.jar"/>
+	<classpathentry kind="lib" path="lib/GLoad/GLoad 1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
