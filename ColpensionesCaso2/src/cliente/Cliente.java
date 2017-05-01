@@ -52,22 +52,22 @@ public class Cliente {
 	private static Socket socket;
 
 	// Variables de consola
-	private static PrintWriter out;
-	private static BufferedReader in;
+	private PrintWriter out;
+	private BufferedReader in;
 	
 	//Variables de seguridad
-	private static Certificado certificado;
-	private static X509Certificate servidor;
-	private static KeyPair keys;
-	private static PublicKey llavePublicaServidor;
-	private static SecretKey llaveSimetrica;
-	private static CifradoAsimetrico cifradoAsimetrico;
-	private static CifradoSimetrico cifradoSimetrico;
-	private static HMAC hmac;
-	private static Hex converter;
+	private  Certificado certificado;
+	private  X509Certificate servidor;
+	private  KeyPair keys;
+	private  PublicKey llavePublicaServidor;
+	private  SecretKey llaveSimetrica;
+	private  CifradoAsimetrico cifradoAsimetrico;
+	private  CifradoSimetrico cifradoSimetrico;
+	private  HMAC hmac;
+	private  Hex converter;
 	
-	public static void inicializar(){
-		System.out.println("Incializando las variables");
+	
+	public void inicializar(){
 		certificado = new Certificado();
 		cifradoSimetrico = new CifradoSimetrico();
 		cifradoAsimetrico = new CifradoAsimetrico();
@@ -75,46 +75,40 @@ public class Cliente {
 		converter = new Hex();
 		try 
 		{	
-			System.out.println("Creando el Socket con la direccion: " + IP + " y el puerto: " + PUERTO);
-
-			System.out.println("prueba0.1");
 			socket = new Socket(IP, PUERTO);
 			out = new PrintWriter(socket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader( socket.getInputStream()));
 		}
 		catch (Exception e) 
 		{
-			System.err.println("Error en la inicializacion de variables"); 
+			System.err.println("Error en la inicializacion de variables: "+ e); 
 		}
 	}
 	
-	public static void main(String[] args) throws IOException{
-		generarSeparador();
-		inicializar();
-		generarSeparador();
+	public Cliente(){
+		inicializar();;
 		iniciarComunicacion();
-		generarSeparador();
-		intercambioCD();
-		generarSeparador();
-		autenticacion();
-		generarSeparador();
-		consulta();
+		try {
+			intercambioCD();
+			autenticacion();
+			consulta();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		cerrarConexiones();
 	}
+	public static void main(String[] args) throws IOException{
+		new Cliente();
+	}
 	
-	public static void iniciarComunicacion(){
+	public void iniciarComunicacion(){
 		try{
-			System.out.println("ETAPA 1: INICIO DE SESIÓN");
 			out.println(HOLA);
-			System.out.println(HOLA);
 			String rta = in.readLine();
-			System.out.println(rta);
 
 			if (rta.equals(OK))
 			{
-				System.out.println("Se confirma la comunicacion entre cliente y servidor");
-				System.out.println("Enviando Algoritmo");
-				System.out.println(ALGORITMOS);
 				out.println(ALGORITMOS);
 			}
 		}
@@ -124,19 +118,16 @@ public class Cliente {
 		}
 	}
 	
-	public static void intercambioCD() throws IOException{
+	public void intercambioCD() throws IOException{
 		String respuesta = in.readLine();
 		if(respuesta.equals(OK)){
 			try{
-				System.out.println("ETAPA 2: INTERCAMBIO DE CD");
 				String ct = certificado.create(new Date(), new Date(), "RSA", 512, "SHA1withRSA");
 				keys = certificado.getKeys();
 				out.println(ct);
-				System.out.println("CERTIFICADO CLIENTE: "+ ct);
 				String pem = leerCertificado(in);
 				verificarCertificado(pem);
 				llavePublicaServidor = servidor.getPublicKey();
-				System.out.println("CERTIFICADO SERVIDOR: " + pem);
 			}
 			catch(Exception e){
 				System.out.println("ERROR - Etapa 2: Intercambio de CD");
@@ -148,50 +139,44 @@ public class Cliente {
 		}	
 	}
 	
-	public static void autenticacion() throws IOException{
-		System.out.println("ETAPA 3: AUTENTICACIÓN");
+	public void autenticacion() throws IOException{
 		
 		//----------------RETO 1----------------------------------------------------------------
-		System.out.println("RETO 1:");
 		//Cifrado reto 1
 		int numReto = (int) (Math.random()*100);
 		String reto1 = Integer.toString(numReto);
-		System.out.println("número del reto 1: " + reto1);
 		byte[] cifradoReto1 = cifradoAsimetrico.cifrar(reto1, llavePublicaServidor);
 		String reto1Enviar = converter.transformarHEX(cifradoReto1);
 		out.println(reto1Enviar);
-		
+		long indior1 = System.currentTimeMillis();
 		//Descifrado reto 1
 		in.readLine(); //vacío
 		String reto1server = in.readLine();
+		long indior2 = System.currentTimeMillis();
+		long indicador1 = indior2-indior1;
+		System.out.println("INDICADOR SERVIDOR: "+indicador1);
 		byte[] sreto1 = converter.destransformarHEX(reto1server);
 		byte[] descifradoReto1 = cifradoAsimetrico.descifrar(sreto1, keys);
 		String servidornum = new String(descifradoReto1);
 		if(reto1.equals(servidornum)){
 			out.println(OK);
-			System.out.println("RETO 1 PASADO");
 		}else{
 			out.println(ERROR);
-			System.out.println("RETO 1 NO PASADO");
 		}
 		
 		//---------------RETO 2--------------------------------------------------------------------
-		System.out.println("RETO 2:");
 		//Descifrado reto 2
 		String reto2 = in.readLine();
 		byte[] byreto2 = converter.destransformarHEX(reto2);
 		byte[] descifradoReto2 = cifradoAsimetrico.descifrar(byreto2, keys);
 		String streto2 = new String(descifradoReto2);
-		System.out.println("número descifrado reto 2: "+ streto2);
 		//cifrado reto 2
 		byte[] cifrarReto2 = cifradoAsimetrico.cifrar(streto2, llavePublicaServidor);
 		String reto2cifrado = converter.transformarHEX(cifrarReto2);
 		out.println(reto2cifrado);
-		System.out.println("RETO 2 TERMINADO");
 	}
 	
-	public static void consulta() throws IOException{
-		System.out.println("ETAPA 4: CONSULTA");
+	public void consulta() throws IOException{
 		
 		//LLAVE SIMÉTRICA
 		String llavesim = in.readLine();
@@ -199,7 +184,6 @@ public class Cliente {
 		byte[] simkey = cifradoAsimetrico.descifrar(desllavesim, keys);
 		SecretKeySpec sk = new SecretKeySpec(simkey, ALGS);
 		llaveSimetrica = sk;
-		System.out.println("Llave simétrica: " + llaveSimetrica);
 		
 		//Cifrado del mensaje
 		int id = (int) (Math.random()*100)+1;
@@ -215,7 +199,6 @@ public class Cliente {
 		String hcedula = converter.transformarHEX(chashcedula);
 		String mensaje = ccedula + SEPARADOR + hcedula;
 		out.println(mensaje);
-		System.out.println("Mensaje enviado: " + mensaje);
 		
 		//Descifrar respuesta
 		String[] rta = in.readLine().split(SEPARADOR);
@@ -225,13 +208,11 @@ public class Cliente {
 		String deshashrta = cifradoSimetrico.descifrar(hashrta, llaveSimetrica);
 		
 		if(desccrta.equals("Este mensaje es la respuesta a su consulta")){
-			System.out.println(desccrta);
-			System.out.println("COMUNICACIÓN EXITOSA, FIN DEL PROTOCOLO");
 			out.println(OK);
 		}
 	}
 	
-	public static String leerCertificado(BufferedReader pIn) throws IOException{
+	public String leerCertificado(BufferedReader pIn) throws IOException{
 		String pem = "";
 		String certificado = pIn.readLine();
 		if(certificado.equalsIgnoreCase("-----BEGIN CERTIFICATE-----"))
@@ -251,7 +232,7 @@ public class Cliente {
 		return pem;
 	}
 	
-	public static boolean verificarCertificado(String pem)
+	public boolean verificarCertificado(String pem)
 	{
 		try 
 		{
@@ -270,11 +251,10 @@ public class Cliente {
 		return false;
 	}
 
-	public static void cerrarConexiones()
+	public void cerrarConexiones()
 	{
 		try
 		{
-			System.out.println("Cerrando las conexiones establecidas");
 			in.close();
 			out.close();
 			socket.close();
@@ -286,7 +266,7 @@ public class Cliente {
 	}
 	
 	
-	public static void generarSeparador(){
+	public void generarSeparador(){
 	System.out.println("-----------------------------------------------------------------------");
 	}
 

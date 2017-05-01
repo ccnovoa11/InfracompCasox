@@ -5,7 +5,7 @@ import uniandes.gload.core.Task;
 
 public class ClientServerTask extends Task 
 {
-
+	
 	@Override
 	public void fail() 
 	{
@@ -25,11 +25,10 @@ public class ClientServerTask extends Task
 		{
 			Cliente cliente = new Cliente();
 			System.out.println("Hola, soy un cliente");
-			
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Error al crear cliente");
+			System.out.println("Error al crear cliente "+e);
 		}
 	}
 
