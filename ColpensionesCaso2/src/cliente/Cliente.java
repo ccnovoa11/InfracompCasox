@@ -47,27 +47,27 @@ public class Cliente {
 	private final static String ALGORITMOS = "ALGORITMOS"+SEPARADOR+ALGS+SEPARADOR+ALGA+SEPARADOR+ALGH;
 
 	// Variables de conexion
-	private final static String IP = "172.24.42.40";
+	private final static String IP = "localhost";
 	private final static int PUERTO = 4443;
 	private static Socket socket;
 
 	// Variables de consola
-	private PrintWriter out;
-	private BufferedReader in;
+	private static PrintWriter out;
+	private static BufferedReader in;
 	
 	//Variables de seguridad
-	private  Certificado certificado;
-	private  X509Certificate servidor;
-	private  KeyPair keys;
-	private  PublicKey llavePublicaServidor;
-	private  SecretKey llaveSimetrica;
-	private  CifradoAsimetrico cifradoAsimetrico;
-	private  CifradoSimetrico cifradoSimetrico;
-	private  HMAC hmac;
-	private  Hex converter;
+	private static Certificado certificado;
+	private static X509Certificate servidor;
+	private static KeyPair keys;
+	private static PublicKey llavePublicaServidor;
+	private static SecretKey llaveSimetrica;
+	private static CifradoAsimetrico cifradoAsimetrico;
+	private static CifradoSimetrico cifradoSimetrico;
+	private static HMAC hmac;
+	private static Hex converter;
 	
-	
-	public void inicializar(){
+	public static void inicializar(){
+		System.out.println("Incializando las variables");
 		certificado = new Certificado();
 		cifradoSimetrico = new CifradoSimetrico();
 		cifradoAsimetrico = new CifradoAsimetrico();
@@ -75,40 +75,46 @@ public class Cliente {
 		converter = new Hex();
 		try 
 		{	
+			System.out.println("Creando el Socket con la direccion: " + IP + " y el puerto: " + PUERTO);
+
+			System.out.println("prueba0.1");
 			socket = new Socket(IP, PUERTO);
 			out = new PrintWriter(socket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader( socket.getInputStream()));
 		}
 		catch (Exception e) 
 		{
-			System.err.println("Error en la inicializacion de variables: "+ e); 
+			System.err.println("Error en la inicializacion de variables"); 
 		}
 	}
 	
-	public Cliente(){
-		inicializar();;
+	public static void main(String[] args) throws IOException{
+		generarSeparador();
+		inicializar();
+		generarSeparador();
 		iniciarComunicacion();
-		try {
-			intercambioCD();
-			autenticacion();
-			consulta();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		generarSeparador();
+		intercambioCD();
+		generarSeparador();
+		autenticacion();
+		generarSeparador();
+		consulta();
 		cerrarConexiones();
 	}
-	public static void main(String[] args) throws IOException{
-		new Cliente();
-	}
 	
-	public void iniciarComunicacion(){
+	public static void iniciarComunicacion(){
 		try{
+			System.out.println("ETAPA 1: INICIO DE SESIÓN");
 			out.println(HOLA);
+			System.out.println(HOLA);
 			String rta = in.readLine();
+			System.out.println(rta);
 
 			if (rta.equals(OK))
 			{
+				System.out.println("Se confirma la comunicacion entre cliente y servidor");
+				System.out.println("Enviando Algoritmo");
+				System.out.println(ALGORITMOS);
 				out.println(ALGORITMOS);
 			}
 		}
@@ -118,16 +124,19 @@ public class Cliente {
 		}
 	}
 	
-	public void intercambioCD() throws IOException{
+	public static void intercambioCD() throws IOException{
 		String respuesta = in.readLine();
 		if(respuesta.equals(OK)){
 			try{
+				System.out.println("ETAPA 2: INTERCAMBIO DE CD");
 				String ct = certificado.create(new Date(), new Date(), "RSA", 512, "SHA1withRSA");
 				keys = certificado.getKeys();
 				out.println(ct);
+				System.out.println("CERTIFICADO CLIENTE: "+ ct);
 				String pem = leerCertificado(in);
 				verificarCertificado(pem);
 				llavePublicaServidor = servidor.getPublicKey();
+				System.out.println("CERTIFICADO SERVIDOR: " + pem);
 			}
 			catch(Exception e){
 				System.out.println("ERROR - Etapa 2: Intercambio de CD");
@@ -139,80 +148,100 @@ public class Cliente {
 		}	
 	}
 	
-	public void autenticacion() throws IOException{
+	public static void autenticacion() throws IOException{
+		System.out.println("ETAPA 3: AUTENTICACIÓN");
 		
 		//----------------RETO 1----------------------------------------------------------------
+		System.out.println("RETO 1:");
 		//Cifrado reto 1
 		int numReto = (int) (Math.random()*100);
 		String reto1 = Integer.toString(numReto);
-		byte[] cifradoReto1 = cifradoAsimetrico.cifrar(reto1, llavePublicaServidor);
-		String reto1Enviar = converter.transformarHEX(cifradoReto1);
+		System.out.println("número del reto 1: " + reto1);
+//		byte[] cifradoReto1 = cifradoAsimetrico.cifrar(reto1, llavePublicaServidor);
+		String reto1Enviar = converter.transformarHEX(reto1.getBytes());
 		out.println(reto1Enviar);
-		long indior1 = System.currentTimeMillis();
+		
 		//Descifrado reto 1
 		in.readLine(); //vacío
 		String reto1server = in.readLine();
-		long indior2 = System.currentTimeMillis();
-		long indicador1 = indior2-indior1;
-		System.out.println("INDICADOR SERVIDOR: "+indicador1);
-		byte[] sreto1 = converter.destransformarHEX(reto1server);
-		byte[] descifradoReto1 = cifradoAsimetrico.descifrar(sreto1, keys);
-		String servidornum = new String(descifradoReto1);
+		byte[] sreto1 = Hex.decodificar(reto1server);
+		String servidornum = new String(sreto1);
+		System.out.println("AHAHAHAHAH"+servidornum);
 		if(reto1.equals(servidornum)){
 			out.println(OK);
+			System.out.println("RETO 1 PASADO");
 		}else{
 			out.println(ERROR);
+			System.out.println("RETO 1 NO PASADO");
 		}
 		
 		//---------------RETO 2--------------------------------------------------------------------
+		System.out.println("RETO 2:");
 		//Descifrado reto 2
 		String reto2 = in.readLine();
-		byte[] byreto2 = converter.destransformarHEX(reto2);
-		byte[] descifradoReto2 = cifradoAsimetrico.descifrar(byreto2, keys);
-		String streto2 = new String(descifradoReto2);
+//		System.out.println("AHAHAHAHAH"+reto2);
+
+		byte[] byreto2 = Hex.decodificar(reto2);
+		String streto2 = Hex.transformarHEX(byreto2);
+		out.println(streto2);
+		
+		System.out.println("número descifrado reto 2: "+ streto2);
 		//cifrado reto 2
-		byte[] cifrarReto2 = cifradoAsimetrico.cifrar(streto2, llavePublicaServidor);
-		String reto2cifrado = converter.transformarHEX(cifrarReto2);
-		out.println(reto2cifrado);
+//		byte[] cifrarReto2 = cifradoAsimetrico.cifrar(streto2, llavePublicaServidor);
+//		String reto2cifrado = converter.transformarHEX(cifrarReto2);
+//		out.println(reto2cifrado);
+		System.out.println("RETO 2 TERMINADO");
 	}
 	
-	public void consulta() throws IOException{
+	public static void consulta() throws IOException{
+		System.out.println("ETAPA 4: CONSULTA");
 		
 		//LLAVE SIMÉTRICA
 		String llavesim = in.readLine();
-		byte[] desllavesim = converter.destransformarHEX(llavesim);
-		byte[] simkey = cifradoAsimetrico.descifrar(desllavesim, keys);
+//		System.out.println("HAHAHA"+llavesim);
+		byte[] simkey = Hex.decodificar(llavesim);
 		SecretKeySpec sk = new SecretKeySpec(simkey, ALGS);
 		llaveSimetrica = sk;
+		System.out.println("Llave simétrica: " + llaveSimetrica);
 		
 		//Cifrado del mensaje
-		int id = (int) (Math.random()*100);
+		int id = (int) (Math.random()*100)+1;
 		String cc = Integer.toString(id);
-		byte[] bcedula = converter.destransformarHEX(cc);
-		byte[] cedula = cifradoSimetrico.cifrar(llaveSimetrica,bcedula);
-		
-		//Digest
-		byte[] hashcedula = hmac.getKeyedDigest(bcedula, llaveSimetrica, ALGH);
-		byte[] chashcedula = cifradoSimetrico.cifrar(llaveSimetrica, hashcedula);
-		
-		String ccedula  = converter.transformarHEX(cedula);
-		String hcedula = converter.transformarHEX(chashcedula);
-		String mensaje = ccedula + SEPARADOR + hcedula;
-		out.println(mensaje);
+		cc += SEPARADOR +cc;
+		out.println(cc);
+		System.out.println("HAHAHAHA"+cc);
+//		byte[] bcedula = converter.destransformarHEX(cc);
+//		byte[] cedula = cifradoSimetrico.cifrar(llaveSimetrica,bcedula);
+//		
+//		//Digest
+//		byte[] hashcedula = hmac.getKeyedDigest(bcedula, llaveSimetrica, ALGH);
+//		byte[] chashcedula = cifradoSimetrico.cifrar(llaveSimetrica, hashcedula);
+//		
+//		String ccedula  = converter.transformarHEX(cedula);
+//		String hcedula = converter.transformarHEX(chashcedula);
+//		String mensaje = ccedula + SEPARADOR + hcedula;
+//		out.println(mensaje);
+//		System.out.println("Mensaje enviado: " + mensaje);
 		
 		//Descifrar respuesta
 		String[] rta = in.readLine().split(SEPARADOR);
-		byte[] ccrta = converter.destransformarHEX(rta[0]);
-		byte[] hashrta = converter.destransformarHEX(rta[1]);
-		String desccrta = cifradoSimetrico.descifrar(ccrta, llaveSimetrica);
-		String deshashrta = cifradoSimetrico.descifrar(hashrta, llaveSimetrica);
 		
-		if(desccrta.equals("Este mensaje es la respuesta a su consulta")){
-			out.println(OK);
-		}
+		byte[] ccrta = Hex.decodificar(rta[0]);
+		byte[] hashrta = Hex.decodificar(rta[1]);
+		
+		out.println("OK");
+		
+//		String desccrta = cifradoSimetrico.descifrar(ccrta, llaveSimetrica);
+//		String deshashrta = cifradoSimetrico.descifrar(hashrta, llaveSimetrica);
+//		
+//		if(desccrta.equals("Este mensaje es la respuesta a su consulta")){
+//			System.out.println(desccrta);
+//			System.out.println("COMUNICACIÓN EXITOSA, FIN DEL PROTOCOLO");
+//			out.println(OK);
+//		}
 	}
 	
-	public String leerCertificado(BufferedReader pIn) throws IOException{
+	public static String leerCertificado(BufferedReader pIn) throws IOException{
 		String pem = "";
 		String certificado = pIn.readLine();
 		if(certificado.equalsIgnoreCase("-----BEGIN CERTIFICATE-----"))
@@ -232,7 +261,7 @@ public class Cliente {
 		return pem;
 	}
 	
-	public boolean verificarCertificado(String pem)
+	public static boolean verificarCertificado(String pem)
 	{
 		try 
 		{
@@ -251,10 +280,11 @@ public class Cliente {
 		return false;
 	}
 
-	public void cerrarConexiones()
+	public static void cerrarConexiones()
 	{
 		try
 		{
+			System.out.println("Cerrando las conexiones establecidas");
 			in.close();
 			out.close();
 			socket.close();
@@ -266,7 +296,7 @@ public class Cliente {
 	}
 	
 	
-	public void generarSeparador(){
+	public static void generarSeparador(){
 	System.out.println("-----------------------------------------------------------------------");
 	}
 

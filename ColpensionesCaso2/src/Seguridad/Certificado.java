@@ -28,7 +28,7 @@ public class Certificado {
 			keys = null;
 		}
 		
-		private  X509Certificate generarV3Certificate(KeyPair pair) throws Exception
+		private static X509Certificate generarV3Certificate(KeyPair pair) throws Exception
 		{
 			PublicKey subPub = pair.getPublic();
 			PrivateKey issPriv = pair.getPrivate();

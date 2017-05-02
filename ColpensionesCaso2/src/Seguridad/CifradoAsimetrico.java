@@ -28,6 +28,7 @@ public class CifradoAsimetrico {
 
 		try { 
 			Cipher cipher = Cipher.getInstance(ALGO); 
+			System.out.println("go " + keyP);
 			cipher.init(Cipher.DECRYPT_MODE, keyP.getPrivate()); 
 			byte [] clearText = cipher.doFinal(cipheredText); 
 			return clearText; 
