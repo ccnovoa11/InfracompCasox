@@ -154,7 +154,11 @@ public class Cliente extends Thread{
 		String reto1server = in.readLine();
 		long indior2 = System.currentTimeMillis();
 		long indicador1 = indior2-indior1;
+<<<<<<< HEAD
 		System.out.println("TIEMPO AUTENTICACIÓN DEL SERVIDOR: "+indicador1);
+=======
+		System.out.println("INDICADOR SERVIDOR: "+indicador1);
+>>>>>>> origin/master
 		byte[] sreto1 = converter.destransformarHEX(reto1server);
 		byte[] descifradoReto1 = cifradoAsimetrico.descifrar(sreto1, keys);
 		String servidornum = new String(descifradoReto1);
@@ -199,7 +203,11 @@ public class Cliente extends Thread{
 		String hcedula = converter.transformarHEX(chashcedula);
 		String mensaje = ccedula + SEPARADOR + hcedula;
 		out.println(mensaje);
+<<<<<<< HEAD
 		long indc3 = System.currentTimeMillis();
+=======
+		
+>>>>>>> origin/master
 		//Descifrar respuesta
 		String[] rta = in.readLine().split(SEPARADOR);
 		long indc23 = System.currentTimeMillis();
