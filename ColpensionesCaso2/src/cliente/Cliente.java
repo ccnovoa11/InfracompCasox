@@ -26,7 +26,7 @@ import Seguridad.CifradoSimetrico;
 import Seguridad.HMAC;
 import util.Hex;
 
-public class Cliente extends Thread{
+public class Cliente {
 
 	//Protocolo inicial
 	
@@ -154,11 +154,7 @@ public class Cliente extends Thread{
 		String reto1server = in.readLine();
 		long indior2 = System.currentTimeMillis();
 		long indicador1 = indior2-indior1;
-<<<<<<< HEAD
-		System.out.println("TIEMPO AUTENTICACIÓN DEL SERVIDOR: "+indicador1);
-=======
 		System.out.println("INDICADOR SERVIDOR: "+indicador1);
->>>>>>> origin/master
 		byte[] sreto1 = converter.destransformarHEX(reto1server);
 		byte[] descifradoReto1 = cifradoAsimetrico.descifrar(sreto1, keys);
 		String servidornum = new String(descifradoReto1);
@@ -190,7 +186,7 @@ public class Cliente extends Thread{
 		llaveSimetrica = sk;
 		
 		//Cifrado del mensaje
-		int id = (int) (Math.random()*100)+1;
+		int id = (int) (Math.random()*100);
 		String cc = Integer.toString(id);
 		byte[] bcedula = converter.destransformarHEX(cc);
 		byte[] cedula = cifradoSimetrico.cifrar(llaveSimetrica,bcedula);
@@ -203,17 +199,9 @@ public class Cliente extends Thread{
 		String hcedula = converter.transformarHEX(chashcedula);
 		String mensaje = ccedula + SEPARADOR + hcedula;
 		out.println(mensaje);
-<<<<<<< HEAD
-		long indc3 = System.currentTimeMillis();
-=======
 		
->>>>>>> origin/master
 		//Descifrar respuesta
 		String[] rta = in.readLine().split(SEPARADOR);
-		long indc23 = System.currentTimeMillis();
-		long indicador3 = indc23 - indc3;
-		System.out.println("TIEMPO DE CONSULTA: "+indicador3);
-		
 		byte[] ccrta = converter.destransformarHEX(rta[0]);
 		byte[] hashrta = converter.destransformarHEX(rta[1]);
 		String desccrta = cifradoSimetrico.descifrar(ccrta, llaveSimetrica);
