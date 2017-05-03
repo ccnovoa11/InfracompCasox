@@ -47,7 +47,7 @@ public class Cliente {
 	private final static String ALGORITMOS = "ALGORITMOS"+SEPARADOR+ALGS+SEPARADOR+ALGA+SEPARADOR+ALGH;
 
 	// Variables de conexion
-	private final static String IP = "172.24.42.40";
+	private final static String IP = "157.253.228.141";
 	private final static int PUERTO = 4443;
 	private static Socket socket;
 
@@ -114,7 +114,7 @@ public class Cliente {
 		}
 		catch (Exception e)
 		{
-			System.err.println("ERROR - ETAPA1: inicio de sesion");
+			// System.err.println("ERROR - ETAPA1: inicio de sesion");
 		}
 	}
 	
@@ -143,7 +143,7 @@ public class Cliente {
 		
 		//----------------RETO 1----------------------------------------------------------------
 		//Cifrado reto 1
-		int numReto = (int) (Math.random()*100);
+		int numReto = 20000000;
 		String reto1 = Integer.toString(numReto);
 		byte[] cifradoReto1 = cifradoAsimetrico.cifrar(reto1, llavePublicaServidor);
 		String reto1Enviar = converter.transformarHEX(cifradoReto1);
@@ -199,9 +199,13 @@ public class Cliente {
 		String hcedula = converter.transformarHEX(chashcedula);
 		String mensaje = ccedula + SEPARADOR + hcedula;
 		out.println(mensaje);
+		long inds3 = System.currentTimeMillis();
 		
 		//Descifrar respuesta
 		String[] rta = in.readLine().split(SEPARADOR);
+		long inds23 = System.currentTimeMillis();
+		long ind3 = inds23-inds3;
+		System.out.println("Tiempo Consulta: " + ind3);
 		byte[] ccrta = converter.destransformarHEX(rta[0]);
 		byte[] hashrta = converter.destransformarHEX(rta[1]);
 		String desccrta = cifradoSimetrico.descifrar(ccrta, llaveSimetrica);

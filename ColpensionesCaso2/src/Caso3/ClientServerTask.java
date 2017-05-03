@@ -25,9 +25,9 @@ public class ClientServerTask extends Task
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Error al crear cliente "+e);
+			//System.out.println("Error al crear cliente "+e);
 			i++;
-			System.out.println(i);
+			System.out.println("Contador fallos: " + i);
 		}
 	}
 
